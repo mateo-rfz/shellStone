@@ -1,8 +1,25 @@
+/*
+PROGRAM NAME : hostname v 0.1.0
+AUTHOR : mateo-rfz
+LICENSE : GPL-3
+
+
+FLOW : show hostname and change hsotname(only for root)
+*/
+
+
+
+
 #include <iostream>
 #include <unistd.h>
 #include <pwd.h>
 #include <string>
-#include <cstring>
+
+
+//program Info
+#define PROGRAM_NAME "hostname"
+#define AUTHOR "mateo-rfz"
+#define VERSION "v 0.1.0"
 
 
 #define NAME_LENGTH 256
@@ -11,6 +28,7 @@
 void 
 usage ()
 {
+    //help mesg
     puts("im here");
 }
 
@@ -18,6 +36,7 @@ usage ()
 
 bool superUserChecker ()
 {
+    //check if user uid == 0 run as root user and return true
     return getuid() == 0;
 }
 
@@ -37,7 +56,7 @@ main(int argc , char * argv[])
             
             if (sethostname(name.c_str() , name.length()) != 0)
             {   
-                puts("Have an Error");
+                puts("Error : error in change hostname");
             }
         }
         else
