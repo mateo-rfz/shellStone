@@ -15,6 +15,8 @@ FLOW : show hostname and change hsotname(only for root)
 #include <pwd.h>
 #include <string>
 
+#include "../lib/stoneParser.hpp"
+
 
 //program Info
 #define PROGRAM_NAME "hostname"
@@ -25,18 +27,34 @@ FLOW : show hostname and change hsotname(only for root)
 #define NAME_LENGTH 256
 
 
+
+// minimalFlags: flags used during argument parsing
+// [0] = help requested (--help / -h)
+// [1] = version requested (--version / -v)
+// [2] = invalid parameter detected
+int minimalFlags[3] = {0, 0, 0};
+std::string parameter;
+
+
+
+
 void 
 usage ()
 {
-    //help mesg
-    puts("im here");
+    std::cout << PROGRAM_NAME << " " << VERSION << " by " << AUTHOR << "\n";
+    std::cout << "Usage:\n";
+    std::cout << "  " << PROGRAM_NAME << "            # Show current hostname\n";
+    std::cout << "  " << PROGRAM_NAME << " <name>     # Set hostname (requires root)\n";
+    std::cout << "  " << PROGRAM_NAME << " --help     # Show this help message\n";
+    std::cout << "  " << PROGRAM_NAME << " --version  # Show program version\n";
 }
 
 
 
-bool superUserChecker ()
+bool 
+superUserChecker ()
 {
-    //check if user uid == 0 run as root user and return true
+    // Returns true if the program is running with root privileges (UID 0).
     return getuid() == 0;
 }
 
@@ -45,30 +63,48 @@ bool superUserChecker ()
 int
 main(int argc , char * argv[])
 {
-    //parse with shellstone parser
+    minimalChecker(argc , argv);
+    if (minimalFlags[2] == 1)
+    {
+        std::cerr << "Error: Invalid parameter passed.\n";
+        return 1;
+    }
+
+    if (minimalFlags[0] == 1)
+    {
+        usage();
+        return 0;
+    }
+    else if (minimalFlags[1] == 1)
+    {
+       std::cout << "hostname " << VERSION << std::endl;
+       return 0;
+    }
         
 
-    if (argc > 1)
+
+
+    if (!parameter.empty())
     {
         if (superUserChecker())
         {
-            std::string name = argv[1];
-            
-            if (sethostname(name.c_str() , name.length()) != 0)
+            if (sethostname(parameter.c_str() , parameter.length()) != 0)
             {   
-                puts("Error : error in change hostname");
+                std::cerr << "sethostname failed";
+                return 1;
             }
         }
         else
         {
-            puts("Need to be super user for change hostname");
+            std::cout << "Need to be super user for change hostname" << std::endl;
+            return 1;
         }
     }
     else 
     {
         char name[NAME_LENGTH];
         gethostname(name , NAME_LENGTH);
-        puts(name);
+        std::cout << name << std::endl;
     }
 
     return 0;
