@@ -4,6 +4,18 @@
 
 
 
+
+
+
+
+#define __VERSION "v0.1"
+#define __AUTHOR "mateo-rfz" 
+
+const char * PROGRAM_NAME;
+
+
+
+
 char * getcwd_logical (char * buffer);
 static void usage () ;
 static void version ();
@@ -31,13 +43,13 @@ str_comp (char * s1 , char * s2)
 int 
 main (int argc , char * argv[])
 {
+    PROGRAM_NAME = argv[0];
+
 #if defined (__linux__)
     // set seccomp
 #elif defined (__OpenBSD__)
     // set pledge ()
 #endif
-
-    
 
 
 
@@ -123,6 +135,6 @@ usage ()
 static void 
 version ()
 {
-    printf("%s" , "version v0.1\n");
+    printf("%s %s\n" , "shell-stone-pwd version" , __VERSION);
     exit(1);
 }
