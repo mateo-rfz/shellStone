@@ -1,8 +1,11 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <stdio.h>
+#include <errno.h>
 
-
+#if defined (__linux__)
+#include <seccomp.h>
+#endif
 
 
 
@@ -19,6 +22,11 @@ const char * PROGRAM_NAME;
 char * getcwd_logical (char * buffer);
 static void usage () ;
 static void version ();
+
+
+
+
+
 
 
 static int 
@@ -44,14 +52,6 @@ int
 main (int argc , char * argv[])
 {
     PROGRAM_NAME = argv[0];
-
-#if defined (__linux__)
-    // set seccomp
-#elif defined (__OpenBSD__)
-    // set pledge ()
-#endif
-
-
 
     /* Flag -> logical flag 
      * default is 1
@@ -80,16 +80,56 @@ main (int argc , char * argv[])
         argv++;
     }
 
+#if defined (__linux__)
+    if (Flag == 1) {
+        scmp_filter_ctx ctx = seccomp_init(SCMP_ACT_KILL);
 
-    if (Flag)
-    {
-        char * buffer = getcwd_logical(buffer);
-        printf("%s\n" , buffer);
+        seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(read), 0);
+        seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(write), 0);
+        seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(close), 0);
+        seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(exit), 0);
+        seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(exit_group), 0);
+        seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(brk), 0);
+        seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(mmap), 0);
+        seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(munmap), 0);
+        seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(mprotect), 0);
+        seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(arch_prctl), 0);
+        seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(fstat), 0);
+        seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(getrandom), 0);
+
+        if (seccomp_load(ctx) < 0) {
+            perror("seccomp_load");
+            seccomp_release(ctx);
+            return 1;
+        }
+        seccomp_release(ctx);
     }
-    else 
+
+#elif defined (__OpenBSD__)
+    if (pledge ("stdio rpath" , NULL) == -1)
     {
+        perror("%s" , "pledge");
+        exit(1);
+    }
+#endif
+
+
+    if (Flag == 1)
+    {
+        char * buffer = getcwd_logical(NULL);
+        if (!buffer) {
+            fprintf(stderr, "PWD not set\n");
+            exit(1);
+        }
+        printf("%s\n" , buffer);
+    } else {
         char * path = getcwd(NULL , 0);
+        if (!path) {
+            perror("getcwd");
+            exit(1);
+        }
         printf("%s\n" , path);
+        free(path);
     }
     
     return 0;
@@ -101,11 +141,14 @@ main (int argc , char * argv[])
 
 
 /*
- * getcwd () -> get currenct directory 
+ * getcwd_logical () -> get currenct logical directory 
  *
  * RETURNS : 
  *      return char pointer of pwd 
  *      return NULL on error
+ *
+ * INPUTS : 
+ *      
  */
 char * 
 getcwd_logical (char * buffer)
@@ -138,3 +181,4 @@ version ()
     printf("%s %s\n" , "shell-stone-pwd version" , __VERSION);
     exit(1);
 }
+
