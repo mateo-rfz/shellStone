@@ -1,3 +1,11 @@
+/*
+PROGRAM NAME : pwd v 0.1.0
+AUTHOR : mateo-rfz
+LICENSE : GPL-3
+
+
+FLOW : pwd - print working directory
+*/
 #include <stdlib.h>
 #include <unistd.h>
 #include <stdio.h>
@@ -169,7 +177,7 @@ getcwd_logical (char * buffer)
 static void
 usage () 
 {
-    printf("%s" , "help mesg\n");
+    printf("%s - print working directory\n\nProgram-options : \n\t-v , --version\tShow version\n\t-h , --help\tDisplay this help and exit\n\t-L\t\tLogical path\n\t-P\t\tPath\n" , PROGRAM_NAME);
     exit(1);
 }
 
